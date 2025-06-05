@@ -37,13 +37,35 @@
 
 <body>
   <script>
-    // 1. Try to read contactId from query params
+    // 1. Try to read values from query params
     function getChatwootIdFromQuery() {
       const params = new URLSearchParams(window.location.search);
       return params.get("uid");
     }
 
-    // 1. Generate or reuse a UUID in localStorage so we get a stable contactId
+    function getChatwootTokenFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("token");
+    }
+
+    // 2. Load environment defaults from .env if present
+    function loadEnv() {
+      return fetch('.env')
+        .then((resp) => resp.ok ? resp.text() : '')
+        .then((text) => {
+          const env = {};
+          text.split('\n').forEach((line) => {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith('#')) return;
+            const [key, ...rest] = trimmed.split('=');
+            env[key] = rest.join('=');
+          });
+          return env;
+        })
+        .catch(() => ({}));
+    }
+
+    // 3. Generate or reuse a UUID in localStorage so we get a stable contactId
     function getOrCreateChatwootId() {
       let id = localStorage.getItem("chatwoot_contact_id");
       if (!id) {
@@ -62,10 +84,11 @@
     }
 
 
-    (function () {
-      const CHATWOOT_BASE = "http://192.168.80.16:3000/";
-      const WEBSITE_TOKEN = "aj7CtUohDRR3w7ybAwvXzGbM";
-      // 3. First check query param, then fallback
+    function initChatwoot(env) {
+      const CHATWOOT_BASE = env.CHATWOOT_BASE || "http://192.168.80.16:3000/";
+      const WEBSITE_TOKEN =
+        getChatwootTokenFromQuery() || env.WEBSITE_TOKEN || "aj7CtUohDRR3w7ybAwvXzGbM";
+      // 4. First check query param, then fallback
       const queryId = getChatwootIdFromQuery();
       const contactId = queryId || getOrCreateChatwootId();
 
@@ -100,7 +123,9 @@
         document.body.appendChild(styleEl.cloneNode(true));
 
       });
-    })();
+    }
+
+    loadEnv().then(initChatwoot);
   </script>
 </body>
 
