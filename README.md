@@ -10,7 +10,7 @@ This project contains a simple HTML page that loads the Chatwoot widget and auto
    - `WEBSITE_TOKEN` – the website token generated in Chatwoot.
 
    Both values are read from `.env` at runtime. `WEBSITE_TOKEN` can be overridden by a `token` query parameter if needed.
-3. Open the page in your browser. If a `uid` query parameter is present, that value is used as the visitor ID. Otherwise a UUID is stored in `localStorage` so returning visitors see their previous conversation.
+3. Open the page in your browser. If a `uid` query parameter is present, that value is used as the visitor ID and persisted in `localStorage`. Otherwise a UUID is generated and stored so returning visitors see their previous conversation.
 
 ## Development
 

@@ -66,8 +66,15 @@
     }
 
     // 3. Generate or reuse a UUID in localStorage so we get a stable contactId
-    function getOrCreateChatwootId() {
+    function getOrCreateChatwootId(preferredId) {
       let id = localStorage.getItem("chatwoot_contact_id");
+
+      if (preferredId) {
+        id = preferredId;
+        localStorage.setItem("chatwoot_contact_id", id);
+        return id;
+      }
+
       if (!id) {
         if (crypto && typeof crypto.randomUUID === "function") {
           id = crypto.randomUUID();
@@ -93,7 +100,7 @@
       }
       // 4. First check query param, then fallback to .env
       const queryId = getChatwootIdFromQuery();
-      const contactId = queryId || getOrCreateChatwootId();
+      const contactId = getOrCreateChatwootId(queryId);
 
       // 2. Inject the Chatwoot SDK script
       const script = document.createElement("script");
