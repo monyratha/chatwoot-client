@@ -43,7 +43,7 @@
       return params.get("uid");
     }
 
-      function getChatwootTokenFromQuery() {
+    function getChatwootTokenFromQuery() {
         const params = new URLSearchParams(window.location.search);
         return params.get("token");
       }
@@ -51,6 +51,11 @@
       function getIdentifierHashFromQuery() {
         const params = new URLSearchParams(window.location.search);
         return params.get("hash");
+      }
+
+      function getConversationIdFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("cid");
       }
 
     // 2. Load environment defaults from .env if present
@@ -130,10 +135,12 @@
       const contactId = getOrCreateChatwootId(queryId);
       const convStoreKey = 'chatwoot_conversation_' + contactId;
 
-      const convId = localStorage.getItem(convStoreKey);
+      const queryCid = getConversationIdFromQuery();
+      let convId = queryCid || localStorage.getItem(convStoreKey);
       if (convId) {
         const cookieName = getConversationCookieName(WEBSITE_TOKEN);
         setCookie(cookieName, convId);
+        localStorage.setItem(convStoreKey, convId);
       }
 
       // If no uid was supplied in the query string, add the generated id to the URL
@@ -181,6 +188,11 @@
         const cid = getCookie(cookieName);
         if (cid) {
           localStorage.setItem(convStoreKey, cid);
+          const url = new URL(window.location);
+          if (url.searchParams.get('cid') !== cid) {
+            url.searchParams.set('cid', cid);
+            window.history.replaceState({}, '', url);
+          }
         }
 
       });

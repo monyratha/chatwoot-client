@@ -15,7 +15,7 @@ This project contains a simple HTML page that loads the Chatwoot widget and auto
 
    If you load the page without a `uid`, the script automatically appends the generated ID to the URL. Copy this URL to access the same conversation from another browser.
 
-   The widget also stores the conversation ID in `localStorage` and restores it when the same `uid` is used. Providing the same `uid` and matching `hash` lets Chatwoot reopen the conversation in any browser or device.
+   The widget also stores the conversation ID in `localStorage` and reflects it in the page URL using a `cid` query parameter. Copy the URL containing both `uid` and `cid` to continue the same conversation from another browser. A matching `hash` is still recommended when verifying visitors.
 
 ## Development
 
