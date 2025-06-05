@@ -85,8 +85,12 @@
 
 
     function initChatwoot(env) {
-      const CHATWOOT_BASE = env.CHATWOOT_BASE || "http://192.168.80.16:3000/";
+      const CHATWOOT_BASE = env.CHATWOOT_BASE;
       const WEBSITE_TOKEN = getChatwootTokenFromQuery() || env.WEBSITE_TOKEN;
+      if (!CHATWOOT_BASE || !WEBSITE_TOKEN) {
+        console.error('CHATWOOT_BASE or WEBSITE_TOKEN missing in .env');
+        return;
+      }
       // 4. First check query param, then fallback to .env
       const queryId = getChatwootIdFromQuery();
       const contactId = queryId || getOrCreateChatwootId();
