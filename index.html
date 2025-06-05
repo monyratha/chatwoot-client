@@ -91,6 +91,27 @@
     }
 
 
+    function getCookie(name) {
+      const match = document.cookie
+        .split('; ')
+        .find((c) => c.startsWith(name + '='));
+      return match ? match.split('=')[1] : null;
+    }
+
+    function setCookie(name, value) {
+      document.cookie = name + '=' + value + '; path=/';
+    }
+
+    function getConversationCookieName(token) {
+      const base = 'cw_conversation';
+      const withToken = base + '_' + token;
+      const cookies = document.cookie.split('; ');
+      if (cookies.some((c) => c.startsWith(withToken + '='))) {
+        return withToken;
+      }
+      return base;
+    }
+
     function initChatwoot(env) {
       const CHATWOOT_BASE = env.CHATWOOT_BASE;
       const WEBSITE_TOKEN = getChatwootTokenFromQuery() || env.WEBSITE_TOKEN;
@@ -101,6 +122,13 @@
       // 4. First check query param, then fallback to .env
       const queryId = getChatwootIdFromQuery();
       const contactId = getOrCreateChatwootId(queryId);
+      const convStoreKey = 'chatwoot_conversation_' + contactId;
+
+      const convId = localStorage.getItem(convStoreKey);
+      if (convId) {
+        const cookieName = getConversationCookieName(WEBSITE_TOKEN);
+        setCookie(cookieName, convId);
+      }
 
       // If no uid was supplied in the query string, add the generated id to the URL
       if (!queryId) {
@@ -138,6 +166,12 @@
         window.$chatwoot.toggle();
         const styleEl = document.getElementById('style');
         document.body.appendChild(styleEl.cloneNode(true));
+
+        const cookieName = getConversationCookieName(WEBSITE_TOKEN);
+        const cid = getCookie(cookieName);
+        if (cid) {
+          localStorage.setItem(convStoreKey, cid);
+        }
 
       });
     }

@@ -11,8 +11,10 @@ This project contains a simple HTML page that loads the Chatwoot widget and auto
 
    Both values are read from `.env` at runtime. `WEBSITE_TOKEN` can be overridden by a `token` query parameter if needed.
 3. Open the page in your browser. If a `uid` query parameter is present, that value is used as the visitor ID and persisted in `localStorage`. Otherwise a UUID is generated and stored so returning visitors see their previous conversation.
-   
-   If you load the page without a `uid`, the script automatically appends the generated ID to the URL. Copy this URL to access the same conversation from a different browser or device.
+
+   If you load the page without a `uid`, the script automatically appends the generated ID to the URL. Copy this URL to access the same conversation from another browser.
+
+   The widget now also stores the conversation ID in `localStorage` and restores it when the same `uid` is used, so chats truly continue across browsers or devices.
 
 ## Development
 
