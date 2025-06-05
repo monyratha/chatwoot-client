@@ -44,9 +44,19 @@
     }
 
     function getChatwootTokenFromQuery() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("token");
-    }
+        const params = new URLSearchParams(window.location.search);
+        return params.get("token");
+      }
+
+      function getIdentifierHashFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("hash");
+      }
+
+      function getConversationIdFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("cid");
+      }
 
     // 2. Load environment defaults from .env if present
     function loadEnv() {
@@ -66,8 +76,15 @@
     }
 
     // 3. Generate or reuse a UUID in localStorage so we get a stable contactId
-    function getOrCreateChatwootId() {
+    function getOrCreateChatwootId(preferredId) {
       let id = localStorage.getItem("chatwoot_contact_id");
+
+      if (preferredId) {
+        id = preferredId;
+        localStorage.setItem("chatwoot_contact_id", id);
+        return id;
+      }
+
       if (!id) {
         if (crypto && typeof crypto.randomUUID === "function") {
           id = crypto.randomUUID();
@@ -84,16 +101,54 @@
     }
 
 
+    function getCookie(name) {
+      const match = document.cookie
+        .split('; ')
+        .find((c) => c.startsWith(name + '='));
+      return match ? match.split('=')[1] : null;
+    }
+
+    function setCookie(name, value) {
+      document.cookie = name + '=' + value + '; path=/';
+    }
+
+    function getConversationCookieName(token) {
+      const base = 'cw_conversation';
+      const withToken = base + '_' + token;
+      const cookies = document.cookie.split('; ');
+      if (cookies.some((c) => c.startsWith(withToken + '='))) {
+        return withToken;
+      }
+      return base;
+    }
+
     function initChatwoot(env) {
       const CHATWOOT_BASE = env.CHATWOOT_BASE;
       const WEBSITE_TOKEN = getChatwootTokenFromQuery() || env.WEBSITE_TOKEN;
+      const identifierHash = getIdentifierHashFromQuery() || env.IDENTIFIER_HASH;
       if (!CHATWOOT_BASE || !WEBSITE_TOKEN) {
         console.error('CHATWOOT_BASE or WEBSITE_TOKEN missing in .env');
         return;
       }
       // 4. First check query param, then fallback to .env
       const queryId = getChatwootIdFromQuery();
-      const contactId = queryId || getOrCreateChatwootId();
+      const contactId = getOrCreateChatwootId(queryId);
+      const convStoreKey = 'chatwoot_conversation_' + contactId;
+
+      const queryCid = getConversationIdFromQuery();
+      let convId = queryCid || localStorage.getItem(convStoreKey);
+      if (convId) {
+        const cookieName = getConversationCookieName(WEBSITE_TOKEN);
+        setCookie(cookieName, convId);
+        localStorage.setItem(convStoreKey, convId);
+      }
+
+      // If no uid was supplied in the query string, add the generated id to the URL
+      if (!queryId) {
+        const url = new URL(window.location);
+        url.searchParams.set('uid', contactId);
+        window.history.replaceState({}, '', url);
+      }
 
       // 2. Inject the Chatwoot SDK script
       const script = document.createElement("script");
@@ -108,10 +163,14 @@
         });
 
         // 3b. Identify the visitor (writes cw_user_<id> & cw_conversation cookies under the hood)
-        window.$chatwoot.setUser(contactId, {
+        const userInfo = {
           name: "Alice Doe",
           email: "alice@example.com"
-        });
+        };
+        if (identifierHash) {
+          userInfo.identifier_hash = identifierHash;
+        }
+        window.$chatwoot.setUser(contactId, userInfo);
 
       };
 
@@ -124,6 +183,17 @@
         window.$chatwoot.toggle();
         const styleEl = document.getElementById('style');
         document.body.appendChild(styleEl.cloneNode(true));
+
+        const cookieName = getConversationCookieName(WEBSITE_TOKEN);
+        const cid = getCookie(cookieName);
+        if (cid) {
+          localStorage.setItem(convStoreKey, cid);
+          const url = new URL(window.location);
+          if (url.searchParams.get('cid') !== cid) {
+            url.searchParams.set('cid', cid);
+            window.history.replaceState({}, '', url);
+          }
+        }
 
       });
     }
