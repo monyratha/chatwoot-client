@@ -43,10 +43,15 @@
       return params.get("uid");
     }
 
-    function getChatwootTokenFromQuery() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("token");
-    }
+      function getChatwootTokenFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("token");
+      }
+
+      function getIdentifierHashFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("hash");
+      }
 
     // 2. Load environment defaults from .env if present
     function loadEnv() {
@@ -115,6 +120,7 @@
     function initChatwoot(env) {
       const CHATWOOT_BASE = env.CHATWOOT_BASE;
       const WEBSITE_TOKEN = getChatwootTokenFromQuery() || env.WEBSITE_TOKEN;
+      const identifierHash = getIdentifierHashFromQuery() || env.IDENTIFIER_HASH;
       if (!CHATWOOT_BASE || !WEBSITE_TOKEN) {
         console.error('CHATWOOT_BASE or WEBSITE_TOKEN missing in .env');
         return;
@@ -150,10 +156,14 @@
         });
 
         // 3b. Identify the visitor (writes cw_user_<id> & cw_conversation cookies under the hood)
-        window.$chatwoot.setUser(contactId, {
+        const userInfo = {
           name: "Alice Doe",
           email: "alice@example.com"
-        });
+        };
+        if (identifierHash) {
+          userInfo.identifier_hash = identifierHash;
+        }
+        window.$chatwoot.setUser(contactId, userInfo);
 
       };
 
