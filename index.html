@@ -102,6 +102,13 @@
       const queryId = getChatwootIdFromQuery();
       const contactId = getOrCreateChatwootId(queryId);
 
+      // If no uid was supplied in the query string, add the generated id to the URL
+      if (!queryId) {
+        const url = new URL(window.location);
+        url.searchParams.set('uid', contactId);
+        window.history.replaceState({}, '', url);
+      }
+
       // 2. Inject the Chatwoot SDK script
       const script = document.createElement("script");
       script.src = CHATWOOT_BASE + "/packs/js/sdk.js";
